@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+# Usage: ji attach <ENVIRONMENT> <COMPONENT> <COMPONENT_PREFIX>
+# Usage: ji attach <local/staging/production> <component1/component2> <component-prefix>
+# Summary: Attaches to Container's bash terminal
+# Help: `ji attach` attaches to container's terminal running on local/remote Kubernetes Cluster though dialog selection
+#
+# example: `ji attach local <project-name> dev` => will attach to component's container based on selection through dialog menu running on local cluster having `dev` prefix.
+# example: `ji attach staging <project-name> stg` => will attach to component's container based on selection through dialog menu running on remote cluster having `stg` prefix.
+
+source rainbow.sh
+# imported for coloring
+
+# import configuration
+ALL_SUPPORT=false
+MULTI_INPUT=false
+PRODUCTION_SUPPORT=true
+source config.sh
+
+# Making chart release name
+release_name=$3-$2
+# Displaying general info
+if [[ $use_context == $local_context ]]; then
+    echo -n "$(echogreen 'Attaching to Component on Local Cluster: ')"
+    echo "$(echoyellow $release_name )"
+    sleep 1
+else
+    echo -n "$(echogreen 'Attaching to Component on Remote Cluster: ')"
+    echo "$(echoyellow $release_name )"
+fi
+
+# Getting running matched pod names and storing in a array
+# Needed to use jq as https://github.com/kubernetes/kubernetes/issues/49387#issuecomment-414877972
+IFS=',' read -ra PODLIST <<< `kubectl get pods -l release=$release_name --context $use_context -n $use_namespace --field-selector=status.phase=Running -o json  | jq -r '.items[] | select(.status.phase != "Running" or ([ .status.conditions[] | select(.type == "Ready" and .status == "True") ] | length ) == 1 ) | .metadata.name' | paste -sd, -`
+podstring=$(for i in "${!PODLIST[@]}"; do printf "%s\t%s\n" "$i" "${PODLIST[$i]}"; done)
+if [[ -z $podstring ]]; then
+    echo "$(echored 'No Resources Found')"
+    exit 1
+fi
+
+# Prompting for choosing a pod from list through dialog menu
+exec 3>&1;
+input=$(dialog --clear --backtitle "ji attach" --title "Select Pod" --menu "Choose one of the following pods:" 0 0 0  <<< echo $podstring 2>&1 1>&3);
+exitcode=$?;
+exec 3>&-;
+if [ $exitcode != 0 ]; then
+    echo "$(echored 'Canceling')"
+    exit 1
+fi
+
+# Clear the screen so that cursor can start from top
+clear
+echo -e "${Green}Attaching to ${PODLIST[$input]} ${RCol}"
+# Attaching to selected pod
+kubectl exec $(echo ${PODLIST[$input]}) -i -t -c $2 -n $use_namespace --context $use_context -- /bin/bash

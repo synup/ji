@@ -1,0 +1,9 @@
+#!/bin/bash
+# Generates the `APP-RELEASE` file
+echo "BRANCH: \"$(git rev-parse --abbrev-ref HEAD)\"" > APP-RELEASE
+echo "COMMIT: \"$(git rev-parse HEAD)\"" >> APP-RELEASE
+echo "COMMIT TIMESTAMP: \"$(TZ=UTC git show --quiet --date=local --format="%cd")\"" >> APP-RELEASE
+printf "\nLAST GIT LOG:\n" >> APP-RELEASE
+printf '#%.0s' {1..50} >> APP-RELEASE && echo >> APP-RELEASE
+git log -1 --stat >> APP-RELEASE
+printf '#%.0s' {1..50} >> APP-RELEASE && echo  >> APP-RELEASE

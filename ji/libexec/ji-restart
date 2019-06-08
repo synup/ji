@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+# Usage: ji restart <ENVIRONMENT> <COMPONENTS> <COMPONENT_PREFIX>
+# Usage: ji restart <local/staging/production> <all/component1,component2> <component-prefix>
+# Summary: Restart components on local/remote Kubernetes Cluster
+# Help: `ji restart` Restart components on local/remote Kubernetes Cluster
+#
+# example: `ji restart local all dev` => will restart components mentioned in `.ji-all-components` file which are not commented to local cluster with `dev` prefix.
+# example: `ji restart staging <project-name>,<project-name> stg` => will restart components passed as arguements on cli to remote cluster with `stg` prefix.
+
+source rainbow.sh
+# imported for coloring
+
+# import configuration
+ALL_SUPPORT=true
+MULTI_INPUT=true
+PRODUCTION_SUPPORT=false
+source config.sh
+
+if [[ $use_context == $local_context ]]; then
+    echo "$(echogreen 'Restarting Components Locally:')"
+else
+    echo "$(echogreen 'Restarting Components on Remote Kubernetes Cluster:')"
+fi
+
+
+for component in "${entered_components[@]}"; do
+    component=$(echo $component | tr -d "[:space:]")
+    echo $(echoyellow $(printf '=%.0s' {1..100}))
+    echo "$(echogreen $component)"
+    resources=$(kubectl get pods -l release=$component_prefix-$component --context $use_context -n $use_namespace 2>&1)
+    if echo $resources | grep --quiet 'No resources found'; then
+        echo -n "$(echopurple $component_prefix-$entered_components)"
+        echo "$(echored ' is not running/deployed.')"
+        exit 1
+    fi
+    kubectl delete pods -l release=$component_prefix-$component --context $use_context -n $use_namespace
+    if [ $? -ne 0 ]; then
+        echo "$(echored 'Restart failed')"
+        exit 1
+    fi
+    echo $(echogreen "Successfully Restarted ${component} on ${use_namespace} with prefix ${component_prefix} by $(git config user.name)")
+    if [[ $slacking == true ]]; then
+        echo -n $(echogreen "Slacking: ")
+        curl -X POST -H 'Content-type: application/json' --data \
+            "{\"text\":\"Successfully Restarted *$component* on *$use_namespace* with prefix *$component_prefix* by *$(git config user.name)*\"}" \
+            $SLACK_WEBHOOK_URL
+        echo ""
+    fi
+    if [[ $prod_slacking == true ]]; then
+        echo -n $(echogreen "Prod Slacking: ")
+        curl -X POST -H 'Content-type: application/json' --data \
+            "{\"text\":\"Successfully Restarted *$component* on *$use_namespace* with prefix *$component_prefix* by *$(git config user.name)*\"}" \
+            $PROD_SLACK_WEBHOOK_URL
+        echo ""
+    fi
+done
+echo $(echoyellow $(printf '=%.0s' {1..100}))
+unset COMPONENT_PREFIX

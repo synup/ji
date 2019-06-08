@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+# Usage: ji up <ENVIRONMENT> <COMPONENTS> <COMPONENT_PREFIX>
+# Usage: ji up <local/staging/production> <all/component1,component2> <component-prefix>
+# Summary: Deploys to local/remote Kubernetes Cluster
+# Help: `ji up` Deploys to local/remote Kubernetes Cluster
+#
+# example: `ji up local all dev` => will deploy components mentioned in `.ji-all-components` file which are not commented to local cluster with `dev` prefix.
+# example: `ji up staging <project-name>,<project-name> stg` => will deploy components passed as arguements on cli to remote cluster with `stg` prefix.
+
+source rainbow.sh
+# imported for coloring
+
+# import configuration
+ALL_SUPPORT=true
+MULTI_INPUT=true
+PRODUCTION_SUPPORT=true
+source config.sh
+
+if [[ $use_context == $local_context ]]; then
+    echo "$(echogreen 'Starting Components Locally:')"
+else
+    echo "$(echogreen 'Login to Image Repository:')"
+    $(aws ecr get-login --no-include-email --region us-west-2)
+    echo "$(echogreen 'Deploying Components to Remote Kubernetes Cluster:')"
+fi
+
+# Looping for all entered components
+for component in "${entered_components[@]}"; do
+    component=$(echo $component | tr -d "[:space:]")
+    echo $(echoyellow $(printf '=%.0s' {1..100}))
+    echo "$(echogreen $component)"
+    # cd into component's chart direcotry
+    pushd $component_path/$component/charts > /dev/null
+        echo -e "${Blue}Deploying from $(pwd)${RCol}"
+        # Parse skaffold's file for environment variable into a array and check them
+        # "# Required Environment Varibles:" use to match the environment variable line
+        # "# Deployment Example:" use to print example
+        env_var_list=(
+            `awk 'BEGIN {FS=":"}
+            {
+                gsub (" ", "", $0);
+                if ($1 == "#RequiredEnvironmentVaribles")
+                {
+                    gsub (",", " ", $2);
+                    {print $2}
+                }
+            }' < skaffold${deploy_command_string}.yaml`
+        )
+        example=`awk 'BEGIN {FS=":"}; { if ($1 == "# Deployment Example") {print $2} }' < skaffold${deploy_command_string}.yaml`
+        for var in "${env_var_list[@]}"; do
+            if [ -z ${!var} ]; then
+                echo -e "${Red}Environment varibales are required for this deployment: ${Purple}${env_var_list[@]}${RCol}"
+                echo -e "${Green}Like this: ${Yellow}${example}${RCol}"
+                echo "$(echored 'Deployment failed')"
+                kubectl config use-context $current_context > /dev/null
+                exit 1
+            fi
+        done
+
+        kubectl config use-context $use_context
+        export COMPONENT_PREFIX=$component_prefix
+        # Running skaffold command to deploy it from component's chart directory
+        skaffold run -f skaffold${deploy_command_string}.yaml
+        if [ $? -ne 0 ]; then
+            echo "$(echored 'Deployment failed')"
+            kubectl config use-context $current_context > /dev/null
+            exit 1
+        fi
+        echo $(echogreen "Successfully Deployed ${component} having $(git rev-parse --abbrev-ref HEAD) branch on ${use_namespace} with prefix ${component_prefix} by $(git config user.name)")
+        # Slacking
+        if [[ $slacking == true ]]; then
+            echo -n $(echogreen "Slacking: ")
+            curl -X POST -H 'Content-type: application/json' --data \
+                "{\"text\":\"Successfully Deployed *$component* having *$(git rev-parse --abbrev-ref HEAD)* branch on *$use_namespace* with prefix *$component_prefix* by *$(git config user.name)*\"}" \
+                $SLACK_WEBHOOK_URL
+            echo ""
+        fi
+    # cd back
+    popd > /dev/null
+done
+echo $(echoyellow $(printf '=%.0s' {1..100}))
+unset COMPONENT_PREFIX
+
+# Switching k8s context to as before
+kubectl config use-context $current_context > /dev/null

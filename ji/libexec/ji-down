@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# Usage: ji down <ENVIRONMENT> <COMPONENTS> <COMPONENT_PREFIX>
+# Usage: ji down <local/staging> <all/component1,component2> <component-prefix>
+# Summary: Uninstalls componenets from local/remote Kubernetes Clusters
+# Help: `ji down` Remove components from local/remote Kubernetes Clusters
+#
+# example: `ji down local all dev` => will delete components mentioned in `.ji-all-components` file which are not commented from local cluster having `dev` prefix.
+# example: `ji down staging <project-name1>,<project-name2> stg` =>will delete components passed as arguements on cli from remote cluster having `stg` prefix.
+
+source rainbow.sh
+# imported for coloring
+
+# import configuration
+ALL_SUPPORT=true
+MULTI_INPUT=true
+PRODUCTION_SUPPORT=false
+source config.sh
+
+if [[ $use_context == $local_context ]]; then
+    echo "$(echopurple 'Deleting Components Locally:')"
+else
+    echo "$(echopurple 'Deleting Components from Remote Kubernetes Cluster:')"
+fi
+
+for i in "${entered_components[@]}"; do
+    i=$(echo $i | tr -d "[:space:]")
+    echo $(echoyellow $(printf '=%.0s' {1..100}))
+    echo "$(echogreen $i)"
+    echo -e "${Blue}Deleting $i Helm Chart${RCol}"
+    kubectl config use-context $use_context
+    release_name=$component_prefix-$i
+    helm del --purge $release_name
+    kubectl config use-context $current_context > /dev/null
+done
+echo $(echoyellow $(printf '=%.0s' {1..100}))
+kubectl config use-context $current_context > /dev/null

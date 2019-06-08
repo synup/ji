@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+# Usage: ji info <ENVIRONMENT> <COMPONENTS> <COMPONENT_PREFIX>
+# Usage: ji info <local/staging/production> <all/component1,component2> <component-prefix>
+# Summary: Display info about deployed components on local/remote Kubernetes cluster
+# Help: `ji info` Display info about deployed components on local/remote Kubernetes cluster
+#
+# example: `ji info local all dev` => will disply info about deployed component mentioned in `.ji-all-components` file which are not commented from local cluster having `dev` prefix.
+# example: `ji info staging <project-name>,<project-name> stg` => will disply info about deployed components passed as arguements on cli from remote cluster having `stg` prefix.
+
+source rainbow.sh
+# imported for coloring
+
+# This is the IP of any worker nodes (kubeproxy) on remote kubernetes cluster.
+# This is used in `ji info` command for instructing how to connect to this service with directly kubernetes service port.
+remote_k8s_ip=ip.k8s.example.com
+
+# import configuration
+ALL_SUPPORT=true
+MULTI_INPUT=true
+PRODUCTION_SUPPORT=true
+source config.sh
+if [[ $use_context == $local_context ]]; then
+    echo "$(echogreen 'Info of Components Local Kubernetes Cluster:')"
+else
+    echo "$(echogreen 'Info of Components from Remote Kubernetes Cluster:')"
+fi
+
+
+for i in "${entered_components[@]}"; do
+    i=$(echo $i | tr -d "[:space:]")
+    echo $(echoyellow $(printf '=%.0s' {1..100}))
+    echo "$(echogreen $i)"
+    release_name=$component_prefix-$i
+    kubectl get pods,deployments,services,ingress,jobs -l release="$release_name" --context $use_context --all-namespaces
+    # For app on remote k8s cluster
+    echo # for newline
+    if [[ $use_context == $remote_context ]]; then
+        ingress_hostname=$(kubectl get ing/$release_name -o jsonpath='{.metadata.annotations.external-dns\.alpha\.kubernetes\.io/hostname}' -n $use_namespace --context $use_context 2> /dev/null)
+        if [[ -n $ingress_hostname ]]; then
+            echo -e "${Green}Connect to${Purple} http://$ingress_hostname ${Green}for access app${RCol}"
+        fi
+        node_port=$(kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services "$release_name-app" --context $use_context -n $use_namespace 2> /dev/null)
+        if [[ $node_port =~ ^-?[0-9]+$ ]]; then
+            echo -e "${Green}Connect to${Purple} http://$remote_k8s_ip:$node_port ${Green}for access App${RCol}"
+        fi
+    fi
+    # For app on local k8s cluster
+    if [[ $use_context == $local_context ]]; then
+        node_port=$(kubectl get --namespace default -o jsonpath="{.spec.ports[0].nodePort}" services "$release_name-app" --context $use_context 2> /dev/null)
+        if [[ $node_port =~ ^-?[0-9]+$ ]]; then
+            echo -e "${Green}Connect to${Purple} http://127.0.0.1:$node_port ${Green}for access App${RCol}"
+        fi
+    fi
+done

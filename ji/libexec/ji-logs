@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+# Usage: ji logs <ENVIRONMENT> <COMPONENTS> <COMPONENT_PREFIX> [--since 5s/2m/3h]
+# Usage: ji logs <local/staging/production> <all/component1,component2> <component-prefix> [--since 5s/2m/3h]
+# Summary: Tail the logs for deployed components on local/remote Kubernetes cluster
+# Help: `ji logs` Tail the logs for deployed components on local/remote Kubernetes Cluster
+#
+# example: `ji logs local all dev --since 1h` => will tail logs of components mentioned in `.ji-all-components` file which are not commented from local cluster having `dev` prefix generated last 1 hour.
+# example: `ji up staging <project-name>,<project-name> stg --since 10m` => will tail logs of components passed as arguements on cli from remote cluster having `stg` prefix generated last 10 minutes.
+
+source rainbow.sh
+# imported for coloring
+
+# import configuration
+ALL_SUPPORT=true
+MULTI_INPUT=true
+PRODUCTION_SUPPORT=true
+source config.sh
+
+# Supporting cli parameter for --since option
+default_since="${KUBETAIL_SINCE:-10s}"
+if [ "$#" -ne 4 ]; then
+    case "$4" in
+    -s|--since)
+        if [ -z "$2" ]; then
+            since="${default_since}"
+        else
+            since="$5"
+        fi
+        ;;
+    *)  ;;
+    esac
+fi
+
+# Printing general info
+if [[ $use_context == $local_context ]]; then
+    echo -n "$(echogreen 'Tailing Logs for Components on Local Cluster: ')"
+else
+    echo -n "$(echogreen 'Tailing Logs for Components on Remote Cluster: ')"
+fi
+
+# Making a string containing all components' relese-names as requested from cli to be supported in kubetail regex
+# so all logs can be fetched, not just one component
+for i in "${entered_components[@]}"; do
+    i=$(echo $i | tr -d "[:space:]")
+    components_logs=$(echo "$components_logs|$component_prefix-$i")
+    echo -n "$(echoyellow "$component_prefix-$i ")"
+done
+echo ""
+
+components_logs_trimed=${components_logs#"|"}
+components_logs_trimed=${components_logs_trimed%"|"}
+
+# Triggering kubetail
+$_JI_ROOT/bin/kubetail "$components_logs_trimed" --regex --colored-output pod --context $use_context --namespace $use_namespace --since $since

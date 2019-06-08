@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+# Usage: ji log <ENVIRONMENT> <COMPONENT> <COMPONENT_PREFIX> [--since 5s/2m/3h]
+# Usage: ji log <local/staging/production> <component1/component2> <component-prefix> [--since 5s/2m/3h]
+# Summary: Tail logs of a deployed component's pod on local/remote Kubernetes cluster
+# Help: `ji log` Tail logs of a component's pod running on local/remote Kubernetes Cluster though dialog selection
+#
+# example: `ji log local v2app dev --since 1h` => will tail the logs of a component's pod based on selection through dialog menu running on local cluster having `dev` prefix generated last 1 hour.
+# example: `ji log staging <project-name> stg --since 10m` => will tail the logs of a component's pod based on selection through dialog menu running on remote cluster having `stg` prefix generated last 10 minutes.
+
+source rainbow.sh
+# imported for coloring
+
+# import configuration
+ALL_SUPPORT=false
+MULTI_INPUT=false
+PRODUCTION_SUPPORT=true
+source config.sh
+
+# Supporting cli parameter for --since option
+default_since="${KUBETAIL_SINCE:-10s}"
+if [ "$#" -ne 4 ]; then
+    case "$4" in
+    -s|--since)
+        if [ -z "$2" ]; then
+            since="${default_since}"
+        else
+            since="$5"
+        fi
+        ;;
+    *)  ;;
+    esac
+fi
+
+# Making chart release name
+release_name=$3-$2
+# Displaying general info
+if [[ $use_context == $local_context ]]; then
+    echo -n "$(echogreen 'Tailing logs of a Component's pod on Local Cluster: ')"
+    echo "$(echoyellow $release_name )"
+    sleep 1
+else
+    echo -n "$(echogreen 'Tailing logs a of Component's pod on Remote Cluster: ')"
+    echo "$(echoyellow $release_name )"
+fi
+
+# Getting running matched pod names and storing in a array
+# Needed to use jq as https://github.com/kubernetes/kubernetes/issues/49387#issuecomment-414877972
+IFS=' ' read -ra DEPLOYLIST <<< "$(kubectl get deployments -o=jsonpath='{.items[*].metadata.name}' -l release=$release_name --context $use_context -n $use_namespace)"
+deploystring=$(for i in "${!DEPLOYLIST[@]}"; do printf "%s\t%s\n" "$i" "${DEPLOYLIST[$i]}"; done)
+if [[ -z $deploystring ]]; then
+    echo "$(echored 'No Resources Found')"
+    exit 1
+fi
+
+# Prompting for choosing a pod from list through dialog menu
+exec 3>&1;
+input=$(dialog --clear --backtitle "ji attach" --title "Select Deployment" --menu "Choose one of the following deployments:" 0 0 0  <<< echo $deploystring 2>&1 1>&3);
+exitcode=$?;
+exec 3>&-;
+if [ $exitcode != 0 ]; then
+    echo "$(echored 'Canceling')"
+    exit 1
+fi
+
+# Clear the screen so that cursor can start from top
+clear
+echo -e "${Green}Tailing logs of ${PODLIST[$input]} ${RCol}"
+# Triggering kubetail
+$_JI_ROOT/bin/kubetail "${DEPLOYLIST[$input]}" --colored-output pod --context $use_context --namespace $use_namespace --since $since

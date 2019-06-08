@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+# Usage: ji port <SEARCH_TERM>
+# Summary: Forward a local port to a Kubernetes Service
+# Help: `ji port` Forwards an unused local port to service port on remote Kubernetes Cluster. Useful for accessing service running on Kubernetes Cluster through a local port.
+#
+# example: `ji port consul` => will forward an unused local port to remote service selected through dialog menu from list of services containing the word `consul` on selected namespace (through dialog).
+
+source rainbow.sh
+# imported for coloring
+
+k8s_context=aws
+
+if [[ -z $1 ]]; then
+    echo "$(echored 'Input search term')"
+    echo "$(echopurple 'This term used for grepping service names on selected namespace')"
+    exit 1
+fi
+
+search_term=$1
+
+echo -e "${Green}Getting Namespace List from Remote Kubernetes Cluster${RCol}"
+# SELECT NAMESPACE
+IFS=' ' read -ra NAMESPACE_LIST <<< "$(kubectl get namespace -o=jsonpath='{.items[*].metadata.name}' --context $k8s_context)"
+namsespace_string=$(for i in "${!NAMESPACE_LIST[@]}"; do printf "%s\t%s\n" "$i" "${NAMESPACE_LIST[$i]}"; done)
+if [[ -z $namsespace_string ]]; then
+    echo "$(echored 'No Resources Found')"
+    exit 1
+fi
+exec 3>&1;
+namespace_input=$(dialog --clear --backtitle "ji port" --title "Select Namespace" --menu "Choose one of the following namespaces:" 0 0 0  <<< echo $namsespace_string 2>&1 1>&3);
+exitcode=$?;
+exec 3>&-;
+if [ $exitcode != 0 ]; then
+    echo "$(echored 'Canceling')"
+    exit 1
+fi
+
+clear
+selected_namespace=${NAMESPACE_LIST[$namespace_input]}
+echo -e "${Green}Selected Namespace is ${Purple}$selected_namespace${Green}, Grepping Service inside this namespace${RCol}"
+
+# SELECT SERVICE
+serivces_grep=$(kubectl get services -o=jsonpath='{.items[*].metadata.name}' --context $k8s_context --namespace $selected_namespace | tr " " "\n" | grep $search_term )
+IFS=' ' read -ra SERVICE_LIST <<< $(echo $serivces_grep)
+service_string=$(for i in "${!SERVICE_LIST[@]}"; do printf "%s\t%s\n" "$i" "${SERVICE_LIST[$i]}" ; done)
+if [[ -z $service_string ]]; then
+    echo "$(echored 'No Resources Found')"
+    exit 1
+fi
+exec 3>&1;
+service_input=$(dialog --clear --backtitle "ji port" --title "Select Service" --menu "Choose one of the following Service:" 0 0 0  <<< echo $service_string 2>&1 1>&3);
+exitcode=$?;
+exec 3>&-;
+if [ $exitcode != 0 ]; then
+    echo "$(echored 'Canceling')"
+    exit 1
+fi
+
+clear
+selected_service=${SERVICE_LIST[$service_input]}
+echo -e "${Green}Selected Service is ${Purple}$selected_service${Green}, Getting Port of this service to forward${RCol}"
+service_port=$(kubectl get service $selected_service -o=jsonpath='{.spec.ports[0].port}' --context $k8s_context --namespace $selected_namespace)
+
+echo -e "${Green}Forwarding local port to service ${Purple}${selected_service}${Green}'s port ${Purple}${service_port} ${Green}on ${Purple}${selected_namespace} ${Green}Namespace${RCol}"
+
+echo -e "${Green}Hit ctrl+c when done${RCol}"
+kubectl port-forward service/$selected_service -n $selected_namespace 0:$service_port

@@ -1,0 +1,212 @@
+# Compiled source #
+###################
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
+
+# Packages #
+############
+# it's better to unpack these files and commit the raw source
+# git has its own built in compression methods
+*.7z
+*.jar
+*.rar
+*.zip
+*.gz
+*.tgz
+*.bzip
+*.bz2
+*.xz
+*.lzma
+*.cab
+
+# Packing-only formats
+*.iso
+*.tar
+
+# Package management formats
+*.dmg
+*.xpi
+*.gem
+*.egg
+*.deb
+*.rpm
+*.msi
+*.msm
+*.msp
+
+# Logs and databases #
+######################
+*.log
+*.sqlite
+
+# OS generated files #
+######################
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files #
+#############
+nbproject
+.~lock.*
+.buildpath
+.idea
+.project
+.settings
+composer.lock
+
+# Cache files for Sublime Text
+*.tmlanguage.cache
+*.tmPreferences.cache
+*.stTheme.cache
+
+# sublime.gitignore
+# Workspace files are user-specific
+*.sublime-workspace
+
+# Project files should be checked into the repository, unless a significant
+# proportion of contributors will probably not be using Sublime Text
+# *.sublime-project
+
+# SFTP configuration file
+sftp-config.json
+
+# Package control specific files
+Package Control.last-run
+Package Control.ca-list
+Package Control.ca-bundle
+Package Control.system-ca-bundle
+Package Control.cache/
+Package Control.ca-certs/
+Package Control.merged-ca-bundle
+Package Control.user-ca-bundle
+oscrypto-ca-bundle.crt
+bh_unicode_properties.cache
+
+# Sublime-github package stores a github token in this file
+# https://packagecontrol.io/packages/sublime-github
+GitHub.sublime-settings
+
+
+# VisualStudioCode.gitignore
+.vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+
+# Vim.gitignore
+# Swap
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-v][a-z]
+[._]sw[a-p]
+
+# Session
+Session.vim
+
+# Temporary
+.netrwhist
+*~
+# Auto-generated tag files
+tags
+
+
+# Ansible.gitignore
+*.retry
+
+# Linux.gitignore
+*~
+
+# temporary files which can be created if a process still has a handle open of a deleted file
+.fuse_hidden*
+
+# KDE directory preferences
+.directory
+
+# Linux trash folder which might appear on any partition or disk
+.Trash-*
+
+# .nfs files are created when an open file is removed but is still being accessed
+.nfs*
+
+
+# macOS.gitignore
+# General
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Icon must end with two \r
+Icon
+
+
+# Thumbnails
+._*
+
+# Files that might appear in the root of a volume
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Directories potentially created on remote AFP share
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Redis.gitignore
+# Ignore redis binary dump (dump.rdb) files
+*.rdb
+
+# Windows.gitignore
+# Windows thumbnail cache files
+Thumbs.db
+ehthumbs.db
+ehthumbs_vista.db
+
+# Dump file
+*.stackdump
+
+# Folder config file
+[Dd]esktop.ini
+
+# Recycle Bin used on file shares
+$RECYCLE.BIN/
+
+
+# Client gitignore files
+client/source_codes/node_modules
+client/source_codes/build
+
+# Windows Installer files
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+
+# Windows shortcuts
+*.lnk
+
+# Ignore hooks generated file
+APP-RELEASE
+
+
+# Ignore tmp
+tmp/*

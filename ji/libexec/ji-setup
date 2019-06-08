@@ -1,0 +1,170 @@
+#!/usr/bin/env bash
+# Usage: ji setup
+# Summary: Configures Deployement Setup on Local
+# Help: `ji setup` Configures Deployement Setup on Local
+
+# Installing prerequisite packages
+prerequisite_setup_for_mac() {
+    # export for coloring as other files can't be exported here
+    local RCol='\e[0m'
+    local Red='\e[1;31m';
+    local Green='\e[1;32m';
+    # Install brew, the package manager of mac (https://brew.sh/)
+    which -s brew || \
+        echo -e "${Red}brew is not found, please install it using instruction on ${Green}https://brew.sh/${RCol}"
+    # Before doing anything, install this package as it is required by this script
+    realpath -s $0 2>&1 > /dev/null || \
+        echo -e "${Red}<project-name>utils is not found, will install it${RCol}" && \
+        brew install <project-name>utils || \
+        echo -e "${Red}Failed Installing Required Packages, Skipping (might be already installed)${RCol}"
+}
+
+## TODO
+# install_pkg_for_ji_linux() {
+# }
+
+install_pkg_for_ji_mac() {
+    # Upgrade bash to 4
+    echo -e "${Purple}Installing Required Packages${RCol}"
+    brew install bash dialog jq curl kubernetes-cli awscli <project-name>utils consul || \
+        echo -e "${Red}Failed Installing Required Packages, Skipping (might be already installed)${RCol}"
+    brew cask install docker || \
+        echo -e "${Red}Failed Installing Required Packages, Skipping (might be already installed)${RCol}"
+    echo -e "${Green}Installed Required Packages successfully${RCol}"
+}
+
+setup_githooks() {
+    echo -e "${Purple}Seting up git hooks${RCol}"
+    pushd $this_script_dirpath/../../ > /dev/null
+    bash .githooks/setup_git_hooks.sh
+    popd > /dev/null
+    echo -e "${Green}Setup git hooks to generate APP-RELEASE file${RCol}"
+}
+
+install_helm() {
+    local helm_pkg_url_Darwin=https://storage.googleapis.com/kubernetes-helm/helm-v2.11.0-darwin-amd64.tar.gz
+    local helm_pkg_url_Linux=https://storage.googleapis.com/kubernetes-helm/helm-v2.11.0-linux-amd64.tar.gz
+    local pkg_url=helm_pkg_url_$current_os
+    echo -e "${Purple}Installing helm${RCol}"
+    curl -Lo helm.tar.gz ${!pkg_url} && \
+    tar -xzf helm.tar.gz
+    mv darwin-amd64/helm darwin-amd64/tiller /usr/local/bin/
+    rm -rf helm.tar.gz darwin-amd64
+    echo -e "${Green}Installed helm (package manager of Kubernetes)${RCol}"
+}
+
+install_skaffold() {
+    local skaffold_pkg_url_Darwin=https://storage.googleapis.com/skaffold/releases/v0.23.0/skaffold-darwin-amd64
+    local skaffold_pkg_url_Linux=https://storage.googleapis.com/skaffold/releases/v0.23.0/skaffold-linux-amd64
+    local pkg_url=skaffold_pkg_url_$current_os
+    echo -e "${Purple}Installing skaffold${RCol}"
+    curl -Lo skaffold ${!pkg_url} && \
+    chmod a+x skaffold && \
+    mv skaffold /usr/local/bin/
+    echo -e "${Green}Installed skaffold (Deployment tool for Kubernetes)${RCol}"
+}
+
+install_heptio_authenticator() {
+    echo -e "${Purple}Installing aws-iam-authenticator${RCol}"
+    local pkg_url=iamAuthenticator_pkg_url_$current_os
+    curl -o /usr/local/bin/aws-iam-authenticator ${!pkg_url}
+    chmod a+x /usr/local/bin/aws-iam-authenticator
+    echo -e "${Green}Installed aws-iam-authenticator for Kubernetes cluster${RCol}"
+}
+
+# This is refrenced example for aws EKS clsuter authentication
+setup_kubeconfig_for_remote_cluster() {
+    # file on aws s3 that contains kubeconfig for remote cluster
+    # s3 is used because this config is secured with aws IAM credentials
+    local remote_k8s_kubeconfig_file=s3://example-config/config-aws
+    local iamAuthenticator_pkg_url_Darwin=https://amazon-eks.s3-us-west-2.amazonaws.com/1.10.3/2018-07-26/bin/darwin/amd64/aws-iam-authenticator
+    local iamAuthenticator_pkg_url_Linux=https://amazon-eks.s3-us-west-2.amazonaws.com/1.10.3/2018-07-26/bin/linux/amd64/aws-iam-authenticator
+    local pkg_url=iamAuthenticator_pkg_url_$current_os
+    echo -e "${Purple}Installing aws-iam-authenticator${RCol}"
+    curl -o /usr/local/bin/aws-iam-authenticator ${!pkg_url}
+    chmod a+x /usr/local/bin/aws-iam-authenticator
+    echo -e "${Green}Installed aws-iam-authenticator for Kubernetes cluster${RCol}"
+    echo -e "${Purple}Setting up kubeconfig${RCol}"
+    mkdir -p ~/.kube
+    aws s3 cp ${remote_k8s_kubeconfig_file} ~/.kube/config-aws || \
+    if [[ $? -ne 0 ]]; then
+        echo -e "${Red}aws cli is not configured${RCol}"
+        echo -e "${Green}configure using ${Purple}aws configure${RCol}"
+        echo -e "${Green}Copy Paste Credentails provided by DevOps Team and Use Region as us-west-2 ${RCol}"
+        aws configure
+        aws s3 cp ${remote_k8s_kubeconfig_file} ~/.kube/config-aws
+    fi
+    case "$SHELL" in
+        '/bin/bash')
+            echo 'export KUBECONFIG=~/.kube/config:~/.kube/config-aws' >>  ~/.bash_profile
+            source ~/.bash_profile
+            ;;
+        '/bin/zsh')
+            echo 'export KUBECONFIG=~/.kube/config:~/.kube/config-aws' >>  ~/.zshenv
+            source ~/.zshenv
+            ;;
+    esac
+    echo -e "${Green}Setup Kubernetes Cluster Config on Local${RCol}"
+}
+
+remove_existing_ji_from_profile() {
+    echo -e "${Purple}Removing ji from current shell${RCol}"
+    # Not using sed so that it can work on linux and mac both
+    case "$SHELL" in
+        '/bin/bash')
+            awk '!/ji\/bin\/ji/' ~/.bash_profile > /tmp/ji-bash_profile && mv /tmp/ji-bash_profile ~/.bash_profile
+            ;;
+        '/bin/zsh')
+            awk '!/ji\/bin\/ji/' ~/.zshenv > /tmp/ji-zshenv && mv /tmp/ji-zshenv ~/.zshenv
+            awk '!/ji\/bin\/ji/' ~/.zshrc > /tmp/ji-zshrc && mv /tmp/ji-zshrc ~/.zshrc
+            ;;
+    esac
+    echo -e "${Green}Removed Existing ji from Shell${RCol}"
+}
+
+add_ji_to_profile() {
+    echo -e "${Purple}Adding ji to current shell${RCol}"
+    local ji_bin_path=$(dirname $this_script_dirpath)/bin/ji
+    case "$SHELL" in
+        '/bin/bash')
+            echo 'eval "$('"$ji_bin_path"' init -)"' >> ~/.bash_profile
+            source ~/.bash_profile
+            ;;
+        '/bin/zsh')
+            echo 'eval "$('"$ji_bin_path"' init -)"' >> ~/.zshenv
+            source ~/.zshenv
+            ;;
+    esac
+    echo -e "${Green}Added ji to Shell Successfully${RCol}"
+}
+
+##################### EXECUTION #######################################
+# Like main function, it's start execution from here
+# Above are function implementation
+set -e
+current_os=$(uname)
+this_script_dirpath=$(dirname `realpath -s $0`)
+# imported for coloring
+source $this_script_dirpath/rainbow.sh
+
+case $current_os in
+    "Darwin")
+        prerequisite_setup_for_mac
+        install_pkg_for_ji_mac
+        setup_githooks
+        install_helm
+        install_skaffold
+        # setup_kubeconfig_for_remote_cluster
+        remove_existing_ji_from_profile
+        add_ji_to_profile
+    ;;
+    # "Linux")
+    #     install_pkg_for_ji_linux
+    #     setup_githooks
+    #     install_helm
+    #     install_skaffold
+    #     setup_kubeconfig_for_remote_cluster
+    #     remove_existing_ji_from_profile
+    #     add_ji_to_profile
+    # ;;
+esac
