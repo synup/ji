@@ -2,6 +2,11 @@
 
 A simple bash script to make life easier for managing services on Kubernetes. It contain commands for doing basic tasks like for doing deployment, checking logs, restarting the services etc.
 
+This project is organised using [sub](https://github.com/basecamp/sub). For main config and starting point look at [config.sh](./libexec/config.sh) and then specific scripts for each subcommands in [libexec folder](./libexec/).
+
+General command structure looks like: `ji <action> <environment> <services> <prefix_string>`.
+
+
 ### Configure Deployement Setup on Local
 
 Run command to setup: `./ji/libexec/ji-setup`
