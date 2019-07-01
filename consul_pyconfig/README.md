@@ -1,4 +1,4 @@
-## `consul-pyconfig` Module:
+## `consul_pyconfig` Module:
 
 Wrapper on top of consul api to facilitates configuration for Application.
 
@@ -23,13 +23,13 @@ Priority of configuration will be:
 Key Naming:
 ```
 Use underscores to separate words inside the key name.
-     Use lower case letters.
-     `pyconfig_` is must be prefix on key name for environment variable.
+     - Use lower case letters.
+     - Key name for environment variable must be capitalised.
 ```
 
 So if key name is `redis_hostname` on the application then corresponding
 consul key name will be `service/environment/RANDOM_STRING/redis_hostname` (like `v2app/production/v2.pyconfig.com/redis_hostname`)
-Environment variable name will be `pyconfig_redis_hostname`.
+Environment variable name will be `REDIS_HOSTNAME`.
 
 ## Using it
 
@@ -37,9 +37,9 @@ It Can be used as pip package.
 
 ```sh
 # you can use it directory from github
-pip install 'git+https://github.com/rahulwa/ji#subdirectory=consul-pyconfig'
+pip install 'git+https://github.com/rahulwa/ji#subdirectory=consul_pyconfig'
 # Or copy/clone this repo and install using directory path
-pip install -e PATH_TO_/consul-pyconfig
+pip install -e PATH_TO_/consul_pyconfig
 ```
 
 ## Allowed methods:

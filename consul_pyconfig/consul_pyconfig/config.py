@@ -66,15 +66,15 @@ class Config:
     Key Naming:
         - Use underscores to separate words inside the key name.
         - Use lower case letters.
-        # - `pyconfig_` is must be prefix on key name for environment variable.
+        -  Key name for environment variable must be capitalised.
     So if key name is `redis_hostname` on the application then corresponding
-    consul key name will be `component/environment/URL/redis_hostname` (like `v2app/production/v2.pyconfig.com/redis_hostname`)
-    Environment variable name will be `pyconfig_redis_hostname`.
+    consul key name will be `component/environment/URL/redis_hostname` (like `example-app/production/v2.pyconfig.com/redis_hostname`)
+    Environment variable name will be `REDIS_HOSTNAME`.
     """
 
     def __init__(self, consulhost=None, consulport=None, keyprefix=None, component=None, env=None, prefix=None):
         self.consul_host = consulhost or os.environ.get(
-            'CONSUL_HOSTNAME') or localhost
+            'CONSUL_HOSTNAME') or 'localhost'
         self.consul_port = int(
             consulport or os.environ.get('CONSUL_PORT') or '8500')
         self.app = component or os.environ.get('COMPONENT_NAME') or 'DUMMY'
@@ -125,18 +125,21 @@ class Config:
         Config.keyprefix = "app/staging/main"
         Config.get("key")
         """
-        env_key = "pyconfig_{}".format(key)
+        env_key = key.upper()
         if env_key in os.environ:
-            return json.loads(os.environ[env_key])
+            try:
+                value = json.loads(os.environ[env_key])
+            except ValueError:
+                value = os.environ[env_key]
+            return value
         key_endpoint = "{}/{}/{}".format(self.consul_kv_endpoint,
                                          self.keyprefix, key)
         consul_data = get_consul_kv(key_endpoint)
         if consul_data:
             return json.loads(consul_data["{}/{}".format(self.keyprefix, key)])
-        return {
-            "Invalid prefix -> {} or Invalid key -> {}".format(
-                self.keyprefix, key)
-        }
+        logger.error("Invalid prefix -> {} or Invalid key -> {}".format(
+            self.keyprefix, key))
+        return None
 
     def get_multi(self, keyprefix):
         """
