@@ -3,9 +3,8 @@
 from flask.helpers import get_debug_flag
 
 from conduit.app import create_app
-from projectconfig import Config
-# from conduit.settings import DevConfig, ProdConfig
+from conduit.settings import DevConfig, ProdConfig
 
-CONFIG = Config
+CONFIG = DevConfig if get_debug_flag() else ProdConfig
 
 app = create_app(CONFIG)
