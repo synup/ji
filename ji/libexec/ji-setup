@@ -14,8 +14,8 @@ prerequisite_setup_for_mac() {
         echo -e "${Red}brew is not found, please install it using instruction on ${Green}https://brew.sh/${RCol}"
     # Before doing anything, install this package as it is required by this script
     realpath -s $0 2>&1 > /dev/null || \
-        echo -e "${Red}<project-name>utils is not found, will install it${RCol}" && \
-        brew install <project-name>utils || \
+        echo -e "${Red}coreutils is not found, will install it${RCol}" && \
+        brew install coreutils || \
         echo -e "${Red}Failed Installing Required Packages, Skipping (might be already installed)${RCol}"
 }
 
@@ -26,7 +26,7 @@ prerequisite_setup_for_mac() {
 install_pkg_for_ji_mac() {
     # Upgrade bash to 4
     echo -e "${Purple}Installing Required Packages${RCol}"
-    brew install bash dialog jq curl kubernetes-cli awscli <project-name>utils consul || \
+    brew install bash dialog jq curl kubernetes-cli awscli coreutils consul || \
         echo -e "${Red}Failed Installing Required Packages, Skipping (might be already installed)${RCol}"
     brew cask install docker || \
         echo -e "${Red}Failed Installing Required Packages, Skipping (might be already installed)${RCol}"
@@ -42,8 +42,8 @@ setup_githooks() {
 }
 
 install_helm() {
-    local helm_pkg_url_Darwin=https://storage.googleapis.com/kubernetes-helm/helm-v2.11.0-darwin-amd64.tar.gz
-    local helm_pkg_url_Linux=https://storage.googleapis.com/kubernetes-helm/helm-v2.11.0-linux-amd64.tar.gz
+    local helm_pkg_url_Darwin=https://get.helm.sh/helm-v2.14.1-darwin-amd64.tar.gz
+    local helm_pkg_url_Linux=https://get.helm.sh/helm-v2.14.1-linux-amd64.tar.gz
     local pkg_url=helm_pkg_url_$current_os
     echo -e "${Purple}Installing helm${RCol}"
     curl -Lo helm.tar.gz ${!pkg_url} && \
@@ -54,8 +54,8 @@ install_helm() {
 }
 
 install_skaffold() {
-    local skaffold_pkg_url_Darwin=https://storage.googleapis.com/skaffold/releases/v0.23.0/skaffold-darwin-amd64
-    local skaffold_pkg_url_Linux=https://storage.googleapis.com/skaffold/releases/v0.23.0/skaffold-linux-amd64
+    local skaffold_pkg_url_Darwin=https://storage.googleapis.com/skaffold/releases/v0.33.0/skaffold-darwin-amd64
+    local skaffold_pkg_url_Linux=https://storage.googleapis.com/skaffold/releases/v0.33.0/skaffold-linux-amd64
     local pkg_url=skaffold_pkg_url_$current_os
     echo -e "${Purple}Installing skaffold${RCol}"
     curl -Lo skaffold ${!pkg_url} && \
