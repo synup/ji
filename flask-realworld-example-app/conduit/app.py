@@ -3,7 +3,7 @@
 from flask import Flask
 from conduit.extensions import bcrypt, cache, db, migrate, jwt, cors
 
-from conduit import commands, user, profile, articles
+from conduit import commands, user, profile, articles, healthcheck
 from conduit.settings import ProdConfig
 from conduit.exceptions import InvalidUsage
 
@@ -44,6 +44,7 @@ def register_blueprints(app):
     app.register_blueprint(user.views.blueprint)
     app.register_blueprint(profile.views.blueprint)
     app.register_blueprint(articles.views.blueprint)
+    app.register_blueprint(healthcheck.views.blueprint)
 
 
 def register_errorhandlers(app):

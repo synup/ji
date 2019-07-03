@@ -22,7 +22,7 @@ COPY APP-RELEASE APP-RELEASE
 RUN printf "\nBUILD TIMESTAMP: \"$(date)\"\n" >> APP-RELEASE
 # for development, just an example
 # if consul running on host then it can be used as `docker build -t test -f Dockerfile ../` and then `docker run -p 5000:5000 test` (won't on linux unless https://github.com/docker/for-linux/issues/264)
-CMD export FLASK_DEBUG=1 FLASK_APP=app-pyconfig.py CONSUL_HOSTNAME=host.docker.internal \
+CMD export CONDUIT_SECRET=something-really-secret FLASK_DEBUG=1 FLASK_APP=app-pyconfig.py CONSUL_HOSTNAME=host.docker.internal \
       && if [ ! -d "migrations" ]; then flask db init; fi \
       && flask db migrate \
       && gunicorn app-pyconfig:app -b 0.0.0.0:5000 -w 3
