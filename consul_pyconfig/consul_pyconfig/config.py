@@ -175,8 +175,7 @@ class Config:
         """
         data = {'environment': {}, 'consul': {}}
         for k, v in os.environ.items():
-            if k.startswith("pyconfig_"):
-                data['environment'][k] = v
+            data['environment'][k] = v
         key_endpoint = "{}/{}".format(self.consul_kv_endpoint, self.keyprefix)
         consul_data = get_consul_kv(key_endpoint, params={"recurse": True})
         if consul_data:
