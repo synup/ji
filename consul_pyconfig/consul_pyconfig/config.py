@@ -120,7 +120,7 @@ class Config:
     def get(self, key):
         """
         It will read from Consul and environment variable then return the value of higher priority.
-        `keyprefix`, `key` are string data-type. return data-type is dictionary.
+        `keyprefix`, `key` are string data-type. return data-type is dictionary or string depending on whether value is json encoded.
         example:
         Config.keyprefix = "app/staging/main"
         Config.get("key")
@@ -136,25 +136,34 @@ class Config:
                                          self.keyprefix, key)
         consul_data = get_consul_kv(key_endpoint)
         if consul_data:
-            return json.loads(consul_data["{}/{}".format(self.keyprefix, key)])
+            try:
+                value = json.loads(
+                    consul_data["{}/{}".format(self.keyprefix, key)])
+            except ValueError:
+                value = consul_data["{}/{}".format(self.keyprefix, key)]
+            return value
         logger.error("Invalid prefix -> {} or Invalid key -> {}".format(
             self.keyprefix, key))
         return None
 
-    def get_multi(self, keyprefix):
+    def get_multi(self, keyprefix=''):
         """
-        It will read from Consul and returns a dictionary.
+        It reads all keys from Consul recursively and returns a dictionary with flattening of directories so beware if it overwrites same key name.
         `keyprefix` are string data-type. return data-type is dictionary.
         example:
-        Config.get_multi("jwt_keys")
+        Config.get_multi("jwt_keys") or Config.get_multi()
         """
+        keyprefix = self.keyprefix if keyprefix == '' else keyprefix
         key_endpoint = "{}/{}".format(self.consul_kv_endpoint,
                                       keyprefix)
         consul_data = get_consul_kv(key_endpoint, {"recurse": True})
         data = {}
         if consul_data:
             for k, v in consul_data.items():
-                data[k.split('/')[-1]] = json.loads(v)
+                try:
+                    data[k.split('/')[-1]] = json.loads(v)
+                except ValueError:
+                    data[k.split('/')[-1]] = v
             return data
         return {
             "Invalid prefix -> {}".format(

@@ -47,7 +47,7 @@ pip install -e PATH_TO_/consul_pyconfig
 ### get(key)
 ```
 It will read from Consul and environment variable then return the value of higher priority.
-`keyprefix`, `key` are string data-type. return data-type is dictionary.
+`keyprefix`, `key` are string data-type. return data-type is dictionary or string depending on whether value is json encoded.
 example:
 Config.keyprefix = "app/staging/main"
 Config.get("key")
@@ -55,10 +55,11 @@ Config.get("key")
  
 ### get_multi(keyprefix)
 ```
-It will read from Consul and returns a dictionary.
+It reads all keys from Consul recursively and returns a dictionary with flattening of directories so beware if it overwrites same key name.
 `keyprefix` are string data-type. return data-type is dictionary.
 example:
 Config.get_multi("jwt_keys")
+Config.get_multi()
 ```
  
 ### get_all()
