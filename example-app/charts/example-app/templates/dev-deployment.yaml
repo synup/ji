@@ -41,7 +41,7 @@ spec:
 {{ toYaml . | indent 12 }}
 {{- end }}
           volumeMounts:
-          - mountPath: {{ .Values.application.containerWorkDir }} /opt/app
+          - mountPath: {{ .Values.application.containerWorkDir }}
             name: app-volume
           resources:
 {{ toYaml .Values.resources | indent 12 }}

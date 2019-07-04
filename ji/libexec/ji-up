@@ -61,7 +61,7 @@ for component in "${entered_components[@]}"; do
         ############ ENV check finish ######################
         kubectl config use-context $use_context
         export COMPONENT_PREFIX=$component_prefix
-        export COMPONENT_CODEBASE_DIRECTORY=$component_path/$component
+        export COMPONENT_CODEBASE_DIRECTORY=$(echo "$(dirname -- $(pwd))")
         # Running skaffold command to deploy it from component's chart directory
         skaffold run -f skaffold${deploy_command_string}.yaml
         if [ $? -ne 0 ]; then
