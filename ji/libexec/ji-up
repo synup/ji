@@ -7,8 +7,9 @@
 # example: `ji up local all dev` => will deploy components mentioned in `.ji-all-components` file which are not commented to local cluster with `dev` prefix.
 # example: `ji up staging <project-name>,<project-name> stg` => will deploy components passed as arguements on cli to remote cluster with `stg` prefix.
 
-source rainbow.sh
+ACTION=up
 # imported for coloring
+source rainbow.sh
 
 # import configuration
 ALL_SUPPORT=true

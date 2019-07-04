@@ -7,8 +7,9 @@
 # example: `ji logs local all dev --since 1h` => will tail logs of components mentioned in `.ji-all-components` file which are not commented from local cluster having `dev` prefix generated last 1 hour.
 # example: `ji up staging <project-name>,<project-name> stg --since 10m` => will tail logs of components passed as arguements on cli from remote cluster having `stg` prefix generated last 10 minutes.
 
-source rainbow.sh
+ACTION=logs
 # imported for coloring
+source rainbow.sh
 
 # import configuration
 ALL_SUPPORT=true

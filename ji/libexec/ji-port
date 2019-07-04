@@ -5,8 +5,9 @@
 #
 # example: `ji port consul` => will forward an unused local port to remote service selected through dialog menu from list of services containing the word `consul` on selected namespace (through dialog).
 
-source rainbow.sh
+ACTION=port
 # imported for coloring
+source rainbow.sh
 
 k8s_context=aws
 

@@ -7,8 +7,9 @@
 # example: `ji down local all dev` => will delete components mentioned in `.ji-all-components` file which are not commented from local cluster having `dev` prefix.
 # example: `ji down staging <project-name1>,<project-name2> stg` =>will delete components passed as arguements on cli from remote cluster having `stg` prefix.
 
-source rainbow.sh
+ACTION=down
 # imported for coloring
+source rainbow.sh
 
 # import configuration
 ALL_SUPPORT=true

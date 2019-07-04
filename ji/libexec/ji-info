@@ -7,8 +7,9 @@
 # example: `ji info local all dev` => will disply info about deployed component mentioned in `.ji-all-components` file which are not commented from local cluster having `dev` prefix.
 # example: `ji info staging <project-name>,<project-name> stg` => will disply info about deployed components passed as arguements on cli from remote cluster having `stg` prefix.
 
-source rainbow.sh
+ACTION=info
 # imported for coloring
+source rainbow.sh
 
 # This is the IP of any worker nodes (kubeproxy) on remote kubernetes cluster.
 # This is used in `ji info` command for instructing how to connect to this service with directly kubernetes service port.

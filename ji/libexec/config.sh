@@ -5,7 +5,7 @@ all_components_file="$_JI_ROOT/../.ji-all-components"
 component_path="$_JI_ROOT/.."
 
 # Declaring all component names so that they can be used for validating input
-declare -a components=(example-python-flask)
+declare -a components=(example-app)
 
 # kubectl contexts to be used for local and remote
 local_context=docker-for-desktop
@@ -54,14 +54,14 @@ case "$1" in
             prod_slacking=true
             deploy_command_string="-production"
         else
-            echo -n "$(echopurple $1)"
-            echo "$(echored ' is not supported for this command')"
+            echo "$(echopurple $1) $(echored 'is not supported for this command')"
             exit 1
         fi
         ;;
     * )
-        echo -n "$(echopurple $1)"
-        echo "$(echored ' input is not a valid environment')"
+        echo "$(echopurple $1) $(echored 'input is not a valid environment')"
+        echo "Running $(echogreen 'ji help '"$ACTION"'')"
+        ji help $ACTION
         exit 1
         ;;
 esac
@@ -75,8 +75,7 @@ case "$2" in
         if [[ $ALL_SUPPORT == true ]]; then
             gather_name_of_components_from_file ${all_components_file} entered_components
         else
-            echo -n "$(echopurple all)"
-            echo "$(echored ' is not supported here')"
+            echo "$(echopurple all) $(echored 'is not supported here')"
             exit 1
         fi
         ;;
@@ -86,13 +85,11 @@ case "$2" in
             if [[ $MULTI_INPUT == true ]]; then
                 comma_separated_component_names_to_array $2 entered_components
             else
-                echo -n "$(echopurple ,)"
-                echo "$(echored ' is not supported here')"
+                echo "$(echopurple ,) $(echored 'is not supported here')"
                 exit 1
             fi
         else
             validate_components_name $2
-            fi
             # `$2` can be used safely here
             entered_components+=($2)
         fi

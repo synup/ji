@@ -7,8 +7,9 @@
 # example: `ji attach local <project-name> dev` => will attach to component's container based on selection through dialog menu running on local cluster having `dev` prefix.
 # example: `ji attach staging <project-name> stg` => will attach to component's container based on selection through dialog menu running on remote cluster having `stg` prefix.
 
-source rainbow.sh
+ACTION=attach
 # imported for coloring
+source rainbow.sh
 
 # import configuration
 ALL_SUPPORT=false
@@ -20,12 +21,10 @@ source config.sh
 release_name=$3-$2
 # Displaying general info
 if [[ $use_context == $local_context ]]; then
-    echo -n "$(echogreen 'Attaching to Component on Local Cluster: ')"
-    echo "$(echoyellow $release_name )"
+    echo "$(echogreen 'Attaching to Component on Local Cluster:') $(echoyellow $release_name )"
     sleep 1
 else
-    echo -n "$(echogreen 'Attaching to Component on Remote Cluster: ')"
-    echo "$(echoyellow $release_name )"
+    echo "$(echogreen 'Attaching to Component on Remote Cluster:') $(echoyellow $release_name )"
 fi
 
 # Getting running matched pod names and storing in a array

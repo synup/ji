@@ -7,8 +7,9 @@
 # example: `ji restart local all dev` => will restart components mentioned in `.ji-all-components` file which are not commented to local cluster with `dev` prefix.
 # example: `ji restart staging <project-name>,<project-name> stg` => will restart components passed as arguements on cli to remote cluster with `stg` prefix.
 
-source rainbow.sh
+ACTION=restart
 # imported for coloring
+source rainbow.sh
 
 # import configuration
 ALL_SUPPORT=true
@@ -29,8 +30,7 @@ for component in "${entered_components[@]}"; do
     echo "$(echogreen $component)"
     resources=$(kubectl get pods -l release=$component_prefix-$component --context $use_context -n $use_namespace 2>&1)
     if echo $resources | grep --quiet 'No resources found'; then
-        echo -n "$(echopurple $component_prefix-$entered_components)"
-        echo "$(echored ' is not running/deployed.')"
+        echo "$(echopurple $component_prefix-$entered_components) $(echored 'is not running/deployed.')"
         exit 1
     fi
     kubectl delete pods -l release=$component_prefix-$component --context $use_context -n $use_namespace

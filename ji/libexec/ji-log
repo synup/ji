@@ -7,8 +7,9 @@
 # example: `ji log local v2app dev --since 1h` => will tail the logs of a component's pod based on selection through dialog menu running on local cluster having `dev` prefix generated last 1 hour.
 # example: `ji log staging <project-name> stg --since 10m` => will tail the logs of a component's pod based on selection through dialog menu running on remote cluster having `stg` prefix generated last 10 minutes.
 
-source rainbow.sh
+ACTION=log
 # imported for coloring
+source rainbow.sh
 
 # import configuration
 ALL_SUPPORT=false
@@ -35,8 +36,7 @@ fi
 release_name=$3-$2
 # Displaying general info
 if [[ $use_context == $local_context ]]; then
-    echo -n "$(echogreen 'Tailing logs of a Component's pod on Local Cluster: ')"
-    echo "$(echoyellow $release_name )"
+    echo "$(echogreen 'Tailing logs of a Component's pod on Local Cluster:') $(echoyellow $release_name )"
     sleep 1
 else
     echo -n "$(echogreen 'Tailing logs a of Component's pod on Remote Cluster: ')"
