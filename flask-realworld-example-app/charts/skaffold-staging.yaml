@@ -1,0 +1,25 @@
+apiVersion: skaffold/v1beta5
+kind: Config
+build:
+  artifacts:
+  - image: XXXXX
+    context: ../../
+    docker:
+      dockerfile: example-app/Dockerfile
+  tagPolicy:
+    gitCommit: {}
+deploy:
+  helm:
+    releases:
+    - name: '{{.COMPONENT_PREFIX}}-example-app'
+      chartPath: example-app
+      valuesFiles:
+      - example-app/values-staging.yaml
+      values:
+        image: XXXX
+      namespace: staging
+      setValueTemplates:
+        application.env.common[0].value: '{{ .COMPONENT_PREFIX }}'
+        # application.env.common[1].value: '\{"url": "http://{{ .COMPONENT_PREFIX }}-exampleapp.staging.example.com"\}'
+        # ingress.annotations.external-dns\.alpha\.kubernetes\.io/hostname: '{{ .COMPONENT_PREFIX
+        #   }}-exampleapp.staging.example.com'

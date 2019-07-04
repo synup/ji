@@ -1,0 +1,22 @@
+apiVersion: skaffold/v1beta5
+kind: Config
+build:
+  artifacts:
+  - image: example-app
+    context: ../../
+    docker:
+      dockerfile: example-app/Dockerfile
+  tagPolicy:
+    sha256: {}
+deploy:
+  helm:
+    releases:
+    - name: '{{.COMPONENT_PREFIX}}-example-app'
+      chartPath: example-app
+      valuesFiles:
+      - example-app/values.yaml
+      values:
+        image: example-app
+      namespace: default
+      setValueTemplates:
+        application.env.common[0].value: '{{ .COMPONENT_PREFIX }}'
