@@ -1,3 +1,6 @@
+Clone of https://github.com/gothinkster/flask-realworld-example-app/ with minimal changes.
+-----
+
 .. image:: image.png
 
 Quickstart
