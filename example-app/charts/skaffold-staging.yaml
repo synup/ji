@@ -1,4 +1,4 @@
-apiVersion: skaffold/v1beta5
+apiVersion: skaffold/v1beta12
 kind: Config
 build:
   artifacts:
@@ -21,5 +21,4 @@ deploy:
       setValueTemplates:
         application.env.common[0].value: '{{ .COMPONENT_PREFIX }}'
         # application.env.common[1].value: '\{"url": "http://{{ .COMPONENT_PREFIX }}-exampleapp.staging.example.com"\}'
-        # ingress.annotations.external-dns\.alpha\.kubernetes\.io/hostname: '{{ .COMPONENT_PREFIX
-        #   }}-exampleapp.staging.example.com'
+        # ingress.annotations.external-dns\.alpha\.kubernetes\.io/hostname: '{{ .COMPONENT_PREFIX }}-exampleapp.staging.example.com'

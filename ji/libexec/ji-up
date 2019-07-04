@@ -32,6 +32,7 @@ for component in "${entered_components[@]}"; do
     # cd into component's chart direcotry
     pushd $component_path/$component/charts > /dev/null
         echo -e "${Blue}Deploying from $(pwd)${RCol}"
+        # Below (It) is use to force export of needed environment variables
         # Parse skaffold's file for environment variable into a array and check them
         # "# Required Environment Varibles:" use to match the environment variable line
         # "# Deployment Example:" use to print example
@@ -56,9 +57,10 @@ for component in "${entered_components[@]}"; do
                 exit 1
             fi
         done
-
+        ############ ENV check finish ######################
         kubectl config use-context $use_context
         export COMPONENT_PREFIX=$component_prefix
+        export COMPONENT_CODEBASE_DIRECTORY=$component_path/$component
         # Running skaffold command to deploy it from component's chart directory
         skaffold run -f skaffold${deploy_command_string}.yaml
         if [ $? -ne 0 ]; then
@@ -79,7 +81,7 @@ for component in "${entered_components[@]}"; do
     popd > /dev/null
 done
 echo $(echoyellow $(printf '=%.0s' {1..100}))
-unset COMPONENT_PREFIX
+unset COMPONENT_PREFIX COMPONENT_CODEBASE_DIRECTORY
 
 # Switching k8s context to as before
 kubectl config use-context $current_context > /dev/null

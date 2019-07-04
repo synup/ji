@@ -1,4 +1,4 @@
-apiVersion: skaffold/v1beta5
+apiVersion: skaffold/v1beta12
 kind: Config
 build:
   artifacts:
@@ -19,4 +19,5 @@ deploy:
         image: example-app
       namespace: default
       setValueTemplates:
+        application.development.codebasePath: '{{ .COMPONENT_CODEBASE_DIRECTORY }}'
         application.env.common[0].value: '{{ .COMPONENT_PREFIX }}'

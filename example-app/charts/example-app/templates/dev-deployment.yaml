@@ -28,8 +28,8 @@ spec:
         - name: {{ .Chart.Name }}
           image: {{ .Values.image }}
           imagePullPolicy: {{ .Values.imagePullPolicy }}
-          command: ["flask", "run"]
-          args: ["--host=0.0.0.0", "--port={{ .Values.application.port }}"]
+          command: ["/bin/sh", "-c"]
+          args: {{.Values.application.startCommand.app}}
           ports:
           - containerPort: {{ .Values.application.port }}
             name: http
@@ -41,14 +41,14 @@ spec:
 {{ toYaml . | indent 12 }}
 {{- end }}
           volumeMounts:
-          - mountPath: /opt/app
+          - mountPath: {{ .Values.application.containerWorkDir }} /opt/app
             name: app-volume
           resources:
 {{ toYaml .Values.resources | indent 12 }}
       volumes:
         - name: app-volume
           hostPath:
-            path: {{ .Values.application.development.directoryPath }}
+            path: {{ .Values.application.development.codebasePath }}
             type: Directory
 {{- with .Values.nodeSelector }}
       nodeSelector:
