@@ -83,7 +83,7 @@ case "$2" in
     # supporting multiple components name at a time using comma separated input
         if echo $2 | grep ',' 2>&1 > /dev/null; then
             if [[ $MULTI_INPUT == true ]]; then
-                comma_separated_component_names_to_array $2 entered_components
+                entered_components=($(comma_separated_component_names_to_array $2))
             else
                 echo "$(echopurple ,) $(echored 'is not supported here')"
                 exit 1

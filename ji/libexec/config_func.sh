@@ -40,12 +40,12 @@ validate_components_name() {
     fi
 }
 
-# Converting comma separated string containing components names $1 to a array $2 with validating from defined components list
+# Converting comma separated string containing components names $1 to a array with validating from defined components list and return it
 comma_separated_component_names_to_array() {
     local comma_separated_component_names=$1
-    local defined_output_array=$2
     for i in $(echo $"$comma_separated_component_names" | sed "s/,/ /g"); do
         validate_components_name $i
         defined_output_array+=($i)
     done
+    echo "${defined_output_array[@]}"
 }
