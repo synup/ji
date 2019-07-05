@@ -16,13 +16,11 @@ slacking() {
     fi
 }
 
-# Reading from file $1 and appending uncommented component names to a array $2 with validating from defined components list
+# Reading from file $1 and returns an array containing uncommented component names with validating from defined components list
 gather_name_of_components_from_file() {
     local all_components_file=$1
-    local defined_output_array=$2
     if [ ! -e $all_components_file ]; then
-        echo -n "$(echopurple $(basename $all_components_file))"
-        echo "$(echored ' file does not exist')"
+        echo "$(echopurple $(basename $all_components_file)) $(echored 'file does not exist')"
         exit 1
     else
         readarray sanitized <<< $(tr -d ' \t\r\f' <$all_components_file)
@@ -30,14 +28,14 @@ gather_name_of_components_from_file() {
         for i in "${common[@]}"; do
             defined_output_array+=($i)
         done
+        echo "${defined_output_array[@]}"
     fi
 }
 
 validate_components_name() {
     local input_component_name=$1
     if [[ ! " ${components[@]} " =~ " $input_component_name " ]]; then
-        echo -n "$(echopurple $input_component_name)"
-        echo "$(echored ' input is not a valid component name')"
+        echo "$(echopurple $input_component_name) $(echored 'input is not a valid component name')"
         exit 1
     fi
 }

@@ -40,11 +40,15 @@ flask db upgrade
 ji up local react-example-app dev
 # for react-example-app
 ji up local example-app dev
+# OR both ji up command can be combined as (here application name is passed from .ji-all-component file's content)
+ji up local all dev
 ```
 - checking status
 ```sh
 ji info local react-example-app dev
 ji info local example-app dev
+# OR combined into one
+ji info local all dev
 ```
 - try out by connecting to shown url
 - tailing logs
@@ -56,9 +60,13 @@ ji logs local example-app dev --since 1h
 ```sh
 ji restart local react-example-app dev
 ji restart local example-app dev
+# OR combined into one
+ji restart local all dev
 
 ji reload local react-example-app dev
 ji reload local example-app dev
+# OR combined into one
+ji reload local all dev
 ```
 - connecting to bash terminal inside application container
 ```sh
@@ -69,6 +77,8 @@ ji attach local example-app dev
 ```sh
 ji down local react-example-app dev
 ji down local example-app dev
+# OR combined into one
+ji down local all dev
 ```
 - etc.
 

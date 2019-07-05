@@ -73,7 +73,7 @@ case "$2" in
         # Reading from file $all_components_file and appending uncommented component names to a array (entered_components),
         # so that ji command can be run for all components in that file
         if [[ $ALL_SUPPORT == true ]]; then
-            gather_name_of_components_from_file ${all_components_file} entered_components
+            entered_components=($(gather_name_of_components_from_file ${all_components_file}))
         else
             echo "$(echopurple all) $(echored 'is not supported here')"
             exit 1
