@@ -1,0 +1,27 @@
+apiVersion: skaffold/v1beta12
+kind: Config
+build:
+  artifacts:
+  - image: XXXXX
+    context: ../../
+    docker:
+      dockerfile: client/Dockerfile.production
+      buildArgs:
+        environment: staging
+  tagPolicy:
+    gitCommit: {}
+deploy:
+  helm:
+    releases:
+    - name: '{{ .COMPONENT_PREFIX }}-client'
+      chartPath: client
+      valuesFiles:
+      - client/values-staging.yaml
+      values:
+        image: XXXXX
+      namespace: staging
+      # setValueTemplates:
+      #   ingress.annotations.external-dns\.alpha\.kubernetes\.io/hostname: '{{ .COMPONENT_PREFIX
+      #     }}-app.staging.example.com'
+      #   ingress.hosts[0]: '{{ .COMPONENT_PREFIX }}-app.staging.example.com'
+      #   service.staticNodePort: '{{ .ENABLE_STATIC_NODE_PORT }}'

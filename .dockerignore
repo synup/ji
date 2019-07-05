@@ -1,0 +1,47 @@
+# Ignore git directory
+.git
+.DS_Store
+
+# Ignore bundler config.
+*/.bundle
+
+# Ignore all logfiles and tempfiles.
+*/log
+*/tmp
+*/results
+*.pyc
+*.log
+*.retry
+*/venv
+*/.cache
+*/test/.cache
+*/archive
+*/build
+*/var
+*/wheels
+*.so
+*.log
+
+# IDEA/Rubymine
+*/.idea
+*/*.iml
+*/.tern-*
+*/coverage
+# VS Code
+*/.vscode
+
+# Flask stuff:
++ .dockerignore
+*/instance
+*/.webassets-cache
+
+# Sphinx documentation
+*/docs/_build/
+
+# PyBuilder
+*/target
+
+# Node generated build
+*/node_modules
+*/*/node_modules
+*/build

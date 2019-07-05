@@ -5,7 +5,7 @@ all_components_file="$_JI_ROOT/../.ji-all-components"
 component_path="$_JI_ROOT/.."
 
 # Declaring all component names so that they can be used for validating input
-declare -a components=(example-app)
+declare -a components=(example-app react-example-app)
 
 # kubectl contexts to be used for local and remote
 local_context=docker-for-desktop
