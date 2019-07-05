@@ -50,6 +50,50 @@ ji attach <local/staging/production> <component> <component-prefix>
 ji port <SEARCH_TERM>
 ```
 
+#### Required configuration
+Look into [config.sh](./libexec/config.sh) and fill/correct needed values. If you want to add support for configuration of accessing remote kubernetes cluster on new client machine using [ji-setup](./libexec/setup), please add a function for it in same (example is provided for aws EKS cluster, `setup_kubeconfig_for_remote_cluster` function).
+
+### How it does?
+
+General command looks like:
+```
+ji <action> <environment> <services> <prefix_string>
+```
+where *action* can be up/down/log/logs/restart/reload, *enviornment* can be production/staging/local and *prefix_string* can be any string.
+Now let’s talk about what basic tasks it supports and how.
+```sh
+ji up staging foo main
+```
+which is going to deploy `foo` service on staging with a (helm package) name `main-foo` and *prefix_string* easily allows us to deploy second instance of same application on staging as `ji up staging foo other`. `ji up` is for deploying the application. It `cd` into service’s charts directory (it knows the path of it because of monorepo) and runs `skaffold-<environments>.yaml` file with some validation and exports `COMPONENT_PREFIX` with value of `<prefix_string>` needed by helm chart to decide which key-value folder on Consul to connect to get config for this service. So [config directory on Consul](../consul_pyconfig/README.md#consul_pyconfig-module) `/SERVICE_NAME/ENVIRONMENT/<SOME_RANDOM_STRING>`'s `SOME_RANDOM_STRING` becomes `prefix_string` on ji deployment. For more info look into [ji-up](./libexec/ji-up).
+```sh
+ji attach staging foo main
+```
+attaches to container's terminal running though dialog selection for `main-foo` application. For more info look into [ji-attach](./libexec/ji-attach).
+```sh
+ji logs staging foo main
+```
+tails the logs of all pods for all k8s deployments with `main-foo` name prefix. For more info look into [ji-logs](./libexec/ji-logs).
+```sh
+ji log staging foo main
+```
+tails the logs of all pods for a particular k8s deployment through a selection menu for `main-foo` name prefix. For more info look into [ji-log](./libexec/ji-log).
+```sh
+ji restart staging foo main
+```
+is going to kill all pods with name prefix `main-foo` and Kubernetes will spawn new ones in-place of these, like restart. It’s hard restart. For more info look into [ji-restart](./libexec/ji-restart).
+```sh
+ji reload staging foo main
+```
+is going to update all k8s deployment objects with a random environment variable and it will trigger rolling deployment of existing deployment. It’s a soft restart in the sense that application will not be down at any particular point of time. For more info look into [ji-reload](./libexec/ji-reload).
+```sh
+ji info staging foo main
+```
+will print the current status of deployed foo application with main prefix (`main-foo` helm chart). For more info look into [ji-info](./libexec/ji-info).
+```sh
+ji down staging foo main
+```
+will uninstall `main-foo` application. For more info look into [ji-down](./libexec/ji-down).
+
 ---
 Big Thanks for below projects:
 - [sub](https://github.com/basecamp/sub) for a delicious way to organize it
