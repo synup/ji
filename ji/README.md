@@ -11,7 +11,7 @@ General command structure looks like: `ji <action> <environment> <services> <pre
 
 Run command to setup: `./ji/libexec/ji-setup`
 
-## Start/Stop/Deply/Manage the components
+## Start/Stop/Deploy/Manage the components
 
 Follow these commands for deployment and other tasks:
 
@@ -49,3 +49,9 @@ ji attach <local/staging/production> <component> <component-prefix>
 # Forward a local port to a Kubernetes Service
 ji port <SEARCH_TERM>
 ```
+
+---
+Big Thanks for below projects:
+- [sub](https://github.com/basecamp/sub) for a delicious way to organize it
+- [kubetail](https://github.com/johanhaleby/kubetail/) for kubectl logs enhancement using bash
+
