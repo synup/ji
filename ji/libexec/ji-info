@@ -6,7 +6,7 @@
 #
 # example: `ji info local all dev` => will disply info about deployed component mentioned in `.ji-all-components` file which are not commented from local cluster having `dev` prefix.
 # example: `ji info staging <project-name>,<project-name> stg` => will disply info about deployed components passed as arguements on cli from remote cluster having `stg` prefix.
-
+# Using `*.web` as service name for detecting that it runs a HTTP/TCP server.
 ACTION=info
 # imported for coloring
 source rainbow.sh
@@ -40,14 +40,14 @@ for i in "${entered_components[@]}"; do
         if [[ -n $ingress_hostname ]]; then
             echo -e "${Green}Connect to${Purple} http://$ingress_hostname ${Green}for access app${RCol}"
         fi
-        node_port=$(kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services "$release_name-app" --context $use_context -n $use_namespace 2> /dev/null)
+        node_port=$(kubectl get -o jsonpath="{.spec.ports[0].nodePort}" services "$release_name-web" --context $use_context -n $use_namespace 2> /dev/null)
         if [[ $node_port =~ ^-?[0-9]+$ ]]; then
             echo -e "${Green}Connect to${Purple} http://$remote_k8s_ip:$node_port ${Green}for access App${RCol}"
         fi
     fi
     # For app on local k8s cluster
     if [[ $use_context == $local_context ]]; then
-        node_port=$(kubectl get --namespace default -o jsonpath="{.spec.ports[0].nodePort}" services "$release_name-app" --context $use_context 2> /dev/null)
+        node_port=$(kubectl get --namespace default -o jsonpath="{.spec.ports[0].nodePort}" services "$release_name-web" --context $use_context 2> /dev/null)
         if [[ $node_port =~ ^-?[0-9]+$ ]]; then
             echo -e "${Green}Connect to${Purple} http://127.0.0.1:$node_port ${Green}for access App${RCol}"
         fi
