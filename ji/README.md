@@ -93,6 +93,10 @@ will print the current status of deployed foo application with main prefix (`mai
 ji down staging foo main
 ```
 will uninstall `main-foo` application. For more info look into [ji-down](./libexec/ji-down).
+```sh
+ji config clone app/staging/stg app/staging/example
+```
+will copy key-value from source(app/staging/stg) to destination(app/staging/example) on consul. It assumes that consul clusters are running on same remote kubernetes cluster. For more info look into [ji-config](./libexec/ji-config).
 
 ---
 Big Thanks for below projects:

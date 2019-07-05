@@ -1,0 +1,139 @@
+#!/usr/bin/env bash
+# Usage: ji config clone <SOURCE_PREFIX_FOLDER> <DESTINATION_PREFIX_FOLDER>
+# Summary: Manages Componenet Configuration on Consul
+# Help: `ji config` Manages Componenet Configuration on Consul
+#
+# PREFIX_FOLDER must be structured as `componenet_name/environment/keyword`, this defines a namespace for instance of component on Consul.
+#
+# example: `ji config clone app/staging/stg app/staging/example` => will clone `app/staging/stg` folder to `app/staging/example` on Consul. This is fasted way to create a throwaway namespace.
+
+# It assumes that consul clusters are running on same remote kubernetes cluster.
+source rainbow.sh
+# imported for coloring
+
+# Valid application list
+declare -a valid_components=(example-app)
+# Valid environment list
+# TODO: development
+declare -a valid_environments=(production staging)
+
+# This value needed, so that it can find proper consul cluster. CORRECT THESE VALUES according your consul setup
+# currently is assumes that
+# staging consul is setup with service name `consul` and on `infra-staging` namespace
+# production consul is setup with service name `consul` and on `infra-production` namespace
+# and port is default
+staging_consul_svc_name=consul
+staging_consul_namespace=infra-staging
+staging_consul_svc_port=8500
+production_consul_svc_name=consul
+production_consul_namespace=infra-production
+production_consul_svc_port=8500
+
+remote_context=aws
+local_context=docker-for-desktop
+
+current_context=$(kubectl config current-context)
+
+# will provide ${input_component} ${input_environment} {input_keyword}
+break_input_prefix() {
+    input_prefix=$1
+    IFS=/ read input_component input_environment input_keyword <<< $input_prefix
+}
+
+# will provide ${valid_input_component}
+check_input_component() {
+    input_component=$1
+    if [[ " ${valid_components[@]} " =~ " ${input_component} " ]]; then
+        valid_input_component=${input_component}
+    else
+        echo "$(echopurple $input_component) $(echored 'input is not a valid component name')"
+        exit 1
+    fi
+}
+
+# will provide ${valid_input_environment} ${!consul_svc_name} ${!consul_svc_port} ${!consul_namespace}
+check_input_environment() {
+    input_environment=$1
+    if [[ " ${valid_environments[@]} " =~ " ${input_environment} " ]]; then
+        valid_input_environment=${input_environment}
+        consul_svc_name="${valid_input_environment}_consul_svc_name"
+        consul_svc_port="${valid_input_environment}_consul_svc_port"
+        consul_namespace="${valid_input_environment}_consul_namespace"
+    else
+        echo "$(echopurple $input_environment) $(echored 'input is not a valid environment')"
+        exit 1
+    fi
+}
+
+
+# will provide ${port_forward_pid}
+do_port_forawrding() {
+    kubectl config use-context $remote_context
+    kubectl port-forward svc/${!consul_svc_name} -n ${!consul_namespace} 10000:${!consul_svc_port} > /dev/null &
+    port_forward_pid=$!
+    echo "$(echopurple 'sleeping for 10s')"
+    sleep 10s
+    kubectl config use-context $local_context
+    consul_status=$(curl -s -o /dev/null -w "%{http_code}" 127.0.0.1:10000/v1/status/leader)
+    if [[ $consul_status -ne 200 ]]; then
+        echo -n "$(echogreen 'Still forawrding remote consul port to local')"
+        sleep 5
+        consul_status=$(curl -s -o /dev/null -w "%{http_code}" 127.0.0.1:10000/v1/status/leader)
+        if [[ $consul_status -ne 200 ]]; then
+            echo "$(echored ' Unable to proxy local port 10000 to consul:') $(echopurple $valid_input_environment)"
+            kill -9 ${port_forward_pid}
+            kubectl config use-context $current_context > /dev/null
+            exit 1
+        fi
+    fi
+    echo
+    echo -n "$(echogreen 'forwarding local port 10000 to consul on remote cluster: ')"
+    echo -e "${Purple}${valid_input_environment}${RCol}"
+}
+
+breaking_and_checking_prefix() {
+    input_prefix=$1
+    break_input_prefix "${input_prefix}"
+    check_input_component "${input_component}"
+    check_input_environment "${input_environment}"
+}
+
+case "$1" in
+    "clone")
+        # exporting consul kv recursive to a file on tmp from entered as source (second arguement, like /core/staging/stg)
+        source_prefix=$2
+        breaking_and_checking_prefix $source_prefix
+        do_port_forawrding
+        # Exporting to consul
+        CONSUL_HTTP_ADDR=http://127.0.0.1:10000 consul kv export $source_prefix/ > /tmp/ji-config-export-consul.json
+        if [ $? -ne 0 ]; then
+            kill -9 ${port_forward_pid}
+            echo "$(echored 'failed to export from consul')"
+            kubectl config use-context $current_context > /dev/null
+            exit 1
+        fi
+        kill -9 ${port_forward_pid}
+
+        # Importing consul kv recursive from a file on tmp as entered as distination (second arguement, like /core/staging/stg1)
+        destination_prefix=$3
+        breaking_and_checking_prefix $destination_prefix
+        do_port_forawrding
+        # Modifying key on exported file as needed by destination
+        sed -i -e 's@'"$source_prefix"'@'"$destination_prefix"'@g' /tmp/ji-config-export-consul.json
+        # Importing to consul
+        CONSUL_HTTP_ADDR=http://127.0.0.1:10000 consul kv import @/tmp/ji-config-export-consul.json
+        if [ $? -ne 0 ]; then
+            kill -9 ${port_forward_pid}
+            echo "$(echored 'failed to import on consul')"
+            kubectl config use-context $current_context
+            exit 1
+        fi
+        kill -9 ${port_forward_pid}
+        kubectl config use-context $current_context
+        echo -e "${Green}Successfully done clone from ${Purple}${source_prefix} ${Green}to ${Purple}${destination_prefix}${RCol}"
+        ;;
+    * )
+        echo ""$(echopurple $1)" $(echored 'input is not a valid command')"
+        exit 1
+        ;;
+esac
