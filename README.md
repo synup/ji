@@ -22,6 +22,13 @@ Preferences
 -> Enable Kubernetes
 -> Click "Apply"
 ```
+Wait for it to start and then install helm tiller in this cluster
+```sh
+# verify that kubernetes cluster is ready
+kubectl get pods -n kube-system
+# Install tiller
+helm init
+```
 
 ### Trying Out
 
