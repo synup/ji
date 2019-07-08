@@ -84,6 +84,3 @@ ji down local example-app,react-example-app dev
 ji down local all dev
 ```
 - etc.
-
----
-For little background https://rahulwa.com/post/journey_of_an_ops_guy_to_microservice/
